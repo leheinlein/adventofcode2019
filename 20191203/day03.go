@@ -10,8 +10,8 @@ import (
 )
 
 type point struct {
-	x     int
-	y     int
+	x int
+	y int
 }
 
 const (
@@ -43,54 +43,11 @@ func processInput(str string) (closest int) {
 	inputs := strings.Split(str, "\n")
 	points := processFirstWire(inputs[0])
 	crossPoints := processSecondWire(inputs[1], points)
-	//return calcClosestManhattan(crossPoints)
-	return calcClosestWireDist(crossPoints)
+	//return calcClosestManhattan(crossPoints)  // <-- Star #1
+	return calcClosestWireDist(crossPoints) // <-- Star #2
 }
 
-func calcClosestWireDist(dists []int) int {
-	min := math.MaxInt64
-	for _, num := range(dists) {
-		if num > 0 && num < min {
-			min = num
-		}
-	}
-	return min
-}
-
-
-
-func processFirstWire(s string) map[point]int {
-	points := make(map[point]int)
-	matches := matcher.FindAllStringSubmatch(s, -1)
-	currentPoint := point{}
-	currLength := 0
-	for _, instruction := range matches {
-		moveNum, _ := strconv.Atoi(instruction[2])
-		for i := 0; i < moveNum; i++ {
-			currLength++
-			newPoint := point{
-				x:     currentPoint.x,
-				y:     currentPoint.y,
-			}
-			switch instruction[1] {
-			case UP:
-				newPoint.y += 1
-			case DOWN:
-				newPoint.y -= 1
-			case RIGHT:
-				newPoint.x += 1
-			case LEFT:
-				newPoint.x -= 1
-			}
-			points[newPoint] = currLength
-			currentPoint = newPoint
-		}
-	}
-	return points
-}
-
-func processSecondWire(s string, wire1Points map[point]int) []int {
-	distances := make([]int, 0)
+func processWire(s string, pointFun func(p point, d int)) {
 	matches := matcher.FindAllStringSubmatch(s, -1)
 	currentPoint := point{}
 	currLength := 0
@@ -112,13 +69,28 @@ func processSecondWire(s string, wire1Points map[point]int) []int {
 			case LEFT:
 				newPoint.x -= 1
 			}
-			wire1dist := wire1Points[newPoint]
-			if wire1dist > 0 {
-				distances = append(distances, currLength +wire1dist)
-			}
+			pointFun(newPoint, currLength)
 			currentPoint = newPoint
 		}
 	}
+}
+
+func processFirstWire(s string) map[point]int {
+	points := make(map[point]int)
+	processWire(s, func(newPoint point, currLength int) {
+		points[newPoint] = currLength
+	})
+	return points
+}
+
+func processSecondWire(s string, wire1Points map[point]int) []int {
+	distances := make([]int, 0)
+	processWire(s, func(newPoint point, currLength int) {
+		wire1dist := wire1Points[newPoint]
+		if wire1dist > 0 {
+			distances = append(distances, currLength+wire1dist)
+		}
+	})
 	return distances
 }
 
@@ -131,6 +103,16 @@ func calcClosestManhattan(points []point) (distance int) {
 		}
 	}
 	return closestDistance
+}
+
+func calcClosestWireDist(dists []int) int {
+	min := math.MaxInt64
+	for _, num := range dists {
+		if num > 0 && num < min {
+			min = num
+		}
+	}
+	return min
 }
 
 // via https://yourbasic.org/golang/absolute-value-int-float/
