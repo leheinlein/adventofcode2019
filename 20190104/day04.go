@@ -11,20 +11,28 @@ func main() {
 	count := 0
 	for i := low; i < high; i++ {
 		str := strconv.Itoa(i)
-		doubleRune := false
+		exactlyDoubleRune := false
+		prevMatches := 0
 		increasing := true
 		prevRune := '0' - 1
 		for _, r := range str {
 			if r == prevRune {
-				doubleRune = true
-			}
-			if r < prevRune {
+				prevMatches++
+			} else if r < prevRune {
 				increasing = false
 				break
+			} else if prevMatches == 1 {
+				exactlyDoubleRune = true
+				prevMatches = 0
+			} else {
+				prevMatches = 0
 			}
 			prevRune = r
 		}
-		if doubleRune && increasing {
+		if prevMatches == 1 {
+			exactlyDoubleRune = true
+		}
+		if exactlyDoubleRune && increasing {
 			count++
 		}
 	}
