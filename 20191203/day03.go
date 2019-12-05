@@ -10,8 +10,8 @@ import (
 )
 
 type point struct {
-	x int
-	y int
+	x     int
+	y     int
 }
 
 const (
@@ -35,8 +35,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	fmt.Printf("REAL DISTANCE: %d\n", processInput(string(fileText)))
-
+	fmt.Printf("MANHATTAN DISTANCE: %d\n", processInput(string(fileText)))
 
 }
 
@@ -44,19 +43,34 @@ func processInput(str string) (closest int) {
 	inputs := strings.Split(str, "\n")
 	points := processFirstWire(inputs[0])
 	crossPoints := processSecondWire(inputs[1], points)
-	return calClosest(crossPoints)
+	//return calcClosestManhattan(crossPoints)
+	return calcClosestWireDist(crossPoints)
 }
 
-func processFirstWire(s string) map[point]bool {
-	points := make(map[point]bool)
+func calcClosestWireDist(dists []int) int {
+	min := math.MaxInt64
+	for _, num := range(dists) {
+		if num > 0 && num < min {
+			min = num
+		}
+	}
+	return min
+}
+
+
+
+func processFirstWire(s string) map[point]int {
+	points := make(map[point]int)
 	matches := matcher.FindAllStringSubmatch(s, -1)
 	currentPoint := point{}
+	currLength := 0
 	for _, instruction := range matches {
 		moveNum, _ := strconv.Atoi(instruction[2])
 		for i := 0; i < moveNum; i++ {
+			currLength++
 			newPoint := point{
-				x: currentPoint.x,
-				y: currentPoint.y,
+				x:     currentPoint.x,
+				y:     currentPoint.y,
 			}
 			switch instruction[1] {
 			case UP:
@@ -68,21 +82,22 @@ func processFirstWire(s string) map[point]bool {
 			case LEFT:
 				newPoint.x -= 1
 			}
-			points[newPoint] = true
+			points[newPoint] = currLength
 			currentPoint = newPoint
 		}
-
 	}
 	return points
 }
 
-func processSecondWire(s string, wire1Points map[point]bool) []point {
-	crossPoints := make([]point, 0)
+func processSecondWire(s string, wire1Points map[point]int) []int {
+	distances := make([]int, 0)
 	matches := matcher.FindAllStringSubmatch(s, -1)
 	currentPoint := point{}
+	currLength := 0
 	for _, instruction := range matches {
 		moveNum, _ := strconv.Atoi(instruction[2])
 		for i := 0; i < moveNum; i++ {
+			currLength++
 			newPoint := point{
 				x: currentPoint.x,
 				y: currentPoint.y,
@@ -97,18 +112,19 @@ func processSecondWire(s string, wire1Points map[point]bool) []point {
 			case LEFT:
 				newPoint.x -= 1
 			}
-			if wire1Points[newPoint] {
-				crossPoints = append(crossPoints, newPoint)
+			wire1dist := wire1Points[newPoint]
+			if wire1dist > 0 {
+				distances = append(distances, currLength +wire1dist)
 			}
 			currentPoint = newPoint
 		}
 	}
-	return crossPoints
+	return distances
 }
 
-func calClosest(points []point) (distance int) {
+func calcClosestManhattan(points []point) (distance int) {
 	closestDistance := math.MaxInt64
-	for _, p := range(points) {
+	for _, p := range points {
 		currDist := abs(p.x) + abs(p.y)
 		if currDist < closestDistance {
 			closestDistance = currDist
