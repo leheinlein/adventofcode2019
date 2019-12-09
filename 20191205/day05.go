@@ -16,16 +16,10 @@ const (
 	output = 4
 	end    = 99
 
-	posMode = 0
 	immMode = 1
 )
 
 func main() {
-	input1 := "1,1,1,4,99,5,6,0,99"
-	nums := parseInput(input1)
-	runProgram(nums)
-	fmt.Printf("%v", nums)
-
 	file, err := os.Open("/Users/eheinlein/go/src/adventOfCode2019/20191205/day5-input.txt")
 	if err != nil {
 		panic(err)
@@ -68,10 +62,10 @@ func processCommand(nums []int, index int) (nextIndex int) {
 		doMult(nums, index)
 		nextIndex = index + 4
 	case input:
-		doInput(nums, index)
+		doInput(nums, 1)
 		nextIndex = index + 2
 	case output:
-		fmt.Println(nums[index+1])
+		fmt.Println(nums[nums[index+1]])
 		nextIndex = index + 2
 	case end:
 		nextIndex = 0
@@ -81,16 +75,33 @@ func processCommand(nums []int, index int) (nextIndex int) {
 	return
 }
 
-func doInput(nums []int, index int) {
+func doInput(nums []int, input int) {
+	// "After providing 1 to the only input instruction" -> input instruction is always the first, at least for now
+	nums[nums[1]] = input
+}
 
+func binaryOp(nums []int, index int, fn func(int, int) int) {
+	posMode := getModes(nums[index], 3)
+	var i1, i2 int
+	if posMode[0] == immMode {
+		i1 = nums[index+1]
+	} else {
+		i1 = nums[nums[index+1]]
+	}
+	if posMode[1] == immMode {
+		i2 = nums[index+2]
+	} else {
+		i2 = nums[nums[index+2]]
+	}
+	nums[nums[index+3]] = fn(i1, i2)
 }
 
 func doMult(nums []int, index int) {
-
+	binaryOp(nums, index, func(i1 int, i2 int) int { return i1 * i2 })
 }
 
 func doAdd(nums []int, index int) {
-
+	binaryOp(nums, index, func(i1 int, i2 int) int { return i1 + i2 })
 }
 
 func runProgram(nums []int) error {
@@ -98,7 +109,7 @@ func runProgram(nums []int) error {
 	for true {
 		newIdx := processCommand(nums, idx)
 		if newIdx == -1 {
-			return fmt.Errorf("Problem with input at %d", idx)
+			return fmt.Errorf("problem with input at %d", idx)
 		}
 		if newIdx == 0 {
 			return nil
@@ -107,4 +118,25 @@ func runProgram(nums []int) error {
 		}
 	}
 	return errors.New("why am I here")
+}
+
+func getModes(instruction int, numModes int) []int {
+	modes := make([]int, numModes)
+	modesStr := strconv.Itoa(instruction)
+	for i := 0; i < numModes; i++ {
+		pos := len(modesStr) - i - 3
+		if pos < 0 {
+			modes[i] = 0
+		} else {
+			m := modesStr[pos]
+			if m == '1' {
+				modes[i] = 1
+			} else if m == '0' {
+				modes[i] = 0
+			} else {
+				panic(fmt.Sprintf("Invalid mode: instruction %d, numMdes %d, mode %d", instruction, numModes, i))
+			}
+		}
+	}
+	return modes
 }
