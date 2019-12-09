@@ -15,10 +15,10 @@ type point struct {
 }
 
 const (
-	UP    = "U"
-	DOWN  = "D"
-	RIGHT = "R"
-	LEFT  = "L"
+	up    = "U"
+	down  = "D"
+	right = "R"
+	left  = "L"
 )
 
 var matcher = regexp.MustCompile(`([RUDL])(\d+)`)
@@ -60,14 +60,14 @@ func processWire(s string, pointFun func(p point, d int)) {
 				y: currentPoint.y,
 			}
 			switch instruction[1] {
-			case UP:
-				newPoint.y += 1
-			case DOWN:
-				newPoint.y -= 1
-			case RIGHT:
-				newPoint.x += 1
-			case LEFT:
-				newPoint.x -= 1
+			case up:
+				newPoint.y++
+			case down:
+				newPoint.y--
+			case right:
+				newPoint.x++
+			case left:
+				newPoint.x--
 			}
 			pointFun(newPoint, currLength)
 			currentPoint = newPoint

@@ -113,9 +113,8 @@ func runProgram(nums []int) error {
 		}
 		if newIdx == 0 {
 			return nil
-		} else {
-			idx = newIdx
 		}
+		idx = newIdx
 	}
 	return errors.New("why am I here")
 }
