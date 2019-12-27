@@ -8,8 +8,8 @@ import (
 )
 
 type object struct {
-	name   string
-	orbits *object
+	name     string
+	orbiters map[*object]bool
 }
 
 func main() {
@@ -21,6 +21,7 @@ func main() {
 	defer file.Close()
 
 	graph := make(map[string]*object)
+	var start, target *object
 
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
@@ -28,28 +29,45 @@ func main() {
 		info := strings.Split(txt, ")")
 		center := lazyGet(info[0], graph)
 		orbiter := lazyGet(info[1], graph)
-		orbiter.orbits = center
+		center.orbiters[orbiter] = true
+		orbiter.orbiters[center] = true
+		switch orbiter.name {
+		case "YOU":
+			start = center
+		case "SAN":
+			target = center
+		}
 	}
-	var count int
-	for _, obj := range graph {
-		count += traverse(obj)
-	}
+	count := findLengthToTarget(start, target)
 	fmt.Println(count)
+}
+
+func findLengthToTarget(start *object, target *object) int {
+	shortestPaths := make(map[*object]int)
+	traverseGraph(start, shortestPaths, 0)
+	return shortestPaths[target]
+
+}
+
+func traverseGraph(curr *object, shortestPaths map[*object]int, currDistance int) {
+	for obj := range curr.orbiters {
+		newDist := currDistance + 1
+		if shortestPaths[obj] == 0 || shortestPaths[obj] > newDist {
+			shortestPaths[obj] = newDist
+			traverseGraph(obj, shortestPaths, newDist)
+		}
+	}
 }
 
 func lazyGet(name string, graph map[string]*object) *object {
 	o, success := graph[name]
 	if !success {
-		newObj := object{name: name}
+		newObj := object{
+			name:     name,
+			orbiters: make(map[*object]bool),
+		}
 		o = &newObj
 		graph[name] = o
 	}
 	return o
-}
-
-func traverse(obj *object) int {
-	if obj.orbits == nil {
-		return 0
-	}
-	return 1 + traverse(obj.orbits)
 }
