@@ -10,11 +10,15 @@ import (
 )
 
 const (
-	add    = 1
-	mult   = 2
-	input  = 3
-	output = 4
-	end    = 99
+	add         = 1
+	mult        = 2
+	input       = 3
+	output      = 4
+	jumpIfTrue  = 5
+	jumpIfFalse = 6
+	lessThan    = 7
+	equals      = 8
+	end         = 99
 
 	immMode = 1
 )
@@ -62,11 +66,31 @@ func processCommand(nums []int, index int) (nextIndex int) {
 		doMult(nums, index)
 		nextIndex = index + 4
 	case input:
-		doInput(nums, 1)
+		doInput(nums, 5)
 		nextIndex = index + 2
 	case output:
 		fmt.Println(nums[nums[index+1]])
 		nextIndex = index + 2
+	case jumpIfTrue:
+		result := doJump(true, nums, index)
+		if result > 0 {
+			nextIndex = result
+		} else {
+			nextIndex = index + 3
+		}
+	case jumpIfFalse:
+		result := doJump(false, nums, index)
+		if result > 0 {
+			nextIndex = result
+		} else {
+			nextIndex = index + 3
+		}
+	case lessThan:
+		doLessThan(nums, index)
+		nextIndex = index + 4
+	case equals:
+		doEquals(nums, index)
+		nextIndex = index + 4
 	case end:
 		nextIndex = 0
 	default:
@@ -80,7 +104,7 @@ func doInput(nums []int, input int) {
 	nums[nums[1]] = input
 }
 
-func binaryOp(nums []int, index int, fn func(int, int) int) {
+func binaryOp(nums []int, index int, fn func(int, int) int, storeResult bool) {
 	posMode := getModes(nums[index], 3)
 	var i1, i2 int
 	if posMode[0] == immMode {
@@ -93,15 +117,47 @@ func binaryOp(nums []int, index int, fn func(int, int) int) {
 	} else {
 		i2 = nums[nums[index+2]]
 	}
-	nums[nums[index+3]] = fn(i1, i2)
+	result := fn(i1, i2)
+	if storeResult {
+		nums[nums[index+3]] = result
+	}
 }
 
 func doMult(nums []int, index int) {
-	binaryOp(nums, index, func(i1 int, i2 int) int { return i1 * i2 })
+	binaryOp(nums, index, func(i1 int, i2 int) int { return i1 * i2 }, true)
 }
 
 func doAdd(nums []int, index int) {
-	binaryOp(nums, index, func(i1 int, i2 int) int { return i1 + i2 })
+	binaryOp(nums, index, func(i1 int, i2 int) int { return i1 + i2 }, true)
+}
+
+func doJump(b bool, nums []int, index int) int {
+	var result int
+	binaryOp(nums, index, func(i1 int, i2 int) int {
+		if (i1 != 0) == b {
+			result = i2
+		}
+		return 0
+	}, false)
+	return result
+}
+
+func doLessThan(nums []int, index int) {
+	binaryOp(nums, index, func(i1 int, i2 int) int {
+		if i1 < i2 {
+			return 1
+		}
+		return 0
+	}, true)
+}
+
+func doEquals(nums []int, index int) {
+	binaryOp(nums, index, func(i1 int, i2 int) int {
+		if i1 == i2 {
+			return 1
+		}
+		return 0
+	}, true)
 }
 
 func runProgram(nums []int) error {
